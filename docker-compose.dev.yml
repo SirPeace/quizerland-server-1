@@ -6,7 +6,9 @@ services:
       context: .
       target: development
     volumes:
+      # директива в файле, определяющая связь точки монтирования на диске с другой точкой монтирования в контейнере.
       - ./:/usr/src/app
+      # Добавление папки ( node_modules ) в ( .dockerignore ) решает проблему только при создании образа docker. Теперь нужно игнорировать синхронизацию папки (node_modules) при запуске docker compose.
       - /usr/src/app/node_modules
     ports:
       - 8000:8000
