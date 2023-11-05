@@ -5,6 +5,7 @@ services:
     build:
       context: .
       target: development
+    container_name: quizerland-node
     volumes:
       # директива в файле, определяющая связь точки монтирования на диске с другой точкой монтирования в контейнере.
       - ./:/usr/src/app
@@ -12,4 +13,21 @@ services:
       - /usr/src/app/node_modules
     ports:
       - 8000:8000
+    depends_on:
+      - mongo
     command: npm run dev
+  mongo:
+    image: mongo:7.0-rc
+    container_name: quizerland-mongo
+    restart: always
+    environment:
+      MONGO_INITDB_DATABASE: db
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports: # DEV ONLY
+      - 27017:27017
+    volumes:
+      - quizerland-mongo:/data/db
+
+volumes:
+  quizerland-mongo:
