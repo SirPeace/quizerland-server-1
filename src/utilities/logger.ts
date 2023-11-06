@@ -1,9 +1,8 @@
 import 'dotenv/config'
 import logger from 'pino'
 import dayjs from 'dayjs'
-import config from 'config'
 
-const level = config.get<string>('logger.level')
+const level = process.env.LOG_LEVEL as string
 
 const log = logger({
   transport: {
