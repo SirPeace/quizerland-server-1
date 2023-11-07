@@ -1,5 +1,5 @@
 import { getModelForClass, modelOptions, prop } from '@typegoose/typegoose'
-import { TUserRequestSchema } from './user.schema'
+import { TUserRequestSchema } from '../schema/user.schema'
 
 @modelOptions({ schemaOptions: { timestamps: true } })
 export class User implements TUserRequestSchema {
