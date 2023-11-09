@@ -1,14 +1,14 @@
 import 'dotenv/config'
 import express, { Request, Response } from 'express'
-import bodyParser from 'body-parser'
 import connectToDb from './utilities/connectToDb'
 import log from './utilities/logger'
+import router from './routes/router'
 
 const app = express()
-
-app.use(bodyParser.json())
-
 const PORT = process.env.PORT ?? 8000
+
+app.use(express.json())
+app.use(router)
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Это изменило мир!')
