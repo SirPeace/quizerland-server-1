@@ -9,6 +9,9 @@ import { sign } from 'jsonwebtoken'
 import TokenModel from './models/token.model'
 
 class AuthController {
+  // ========================
+  // ===== Registration =====
+  // ========================
   async register(
     req: Request<{}, {}, TUserRequestSchema>,
     res: Response,
@@ -25,16 +28,14 @@ class AuthController {
         Number(process.env.SALT),
       )
 
-      // создаём объект пользователя прошедшего валидацию, меняем пароль на хэшированный, записываем нового пользователя в базу данных
+      // создаём объект пользователя прошедшего валидацию, меняем пароль на хэшированный, записываем нового пользователя в db
       const updatedUserData = {
         ...verifiedUser,
         password: hashPassword,
       }
       const createdUser = await UserModel.create(updatedUserData)
 
-      // ================================
-      //        Создание токена
-      // ================================
+      // создаём токен, добавляем в db
       const token = sign({}, String(process.env.JWT_SECRET_KEY), {
         expiresIn: '1h',
         algorithm: 'HS256',
@@ -43,25 +44,30 @@ class AuthController {
         userId: createdUser._id,
         token,
       })
-      // ================================
 
-      const responseUser = {
+      // создаём cookie на основе токена
+      res.cookie('auth.token', token, {
+        httpOnly: true,
+        maxAge: 3600 * 1000,
+        sameSite: 'lax',
+      })
+      // создаем объект ответа пользователю
+      const resToUser = {
         user: {
           email: createdUser.email,
           nickname: createdUser.nickname,
           id: createdUser._id,
         },
-        token,
       }
 
-      return res.status(201).json(responseUser)
+      return res.status(201).json(resToUser)
     } catch (e: any) {
       // ошибка DB mongo, попытка зарегистрировать пользователя уже существующего в BD
       if (e?.name === 'MongoServerError' && e.code === 11000) {
         return res
           .status(422)
           .send(
-            `Пользователь с таким email: ${candidateUser.email}  , уже зарегистрирован!`,
+            `Пользователь с таким email: ${candidateUser.email}, уже зарегистрирован!`,
           )
       }
       // все ошибки описанные в схеме ZOD
@@ -73,13 +79,25 @@ class AuthController {
     }
   }
 
+  // ========================
+  // ======== Login =========
+  // ========================
+
   login(req: Request, res: Response): void {
     res.json({ message: 'Логирование пользователя' })
   }
 
+  // ========================
+  // ======= Logout =========
+  // ========================
+
   logout(req: Request, res: Response): void {
     res.json({ message: 'Выход из системы' })
   }
+
+  // ========================
+  // ====== GetUser =========
+  // ========================
 
   getUser(req: Request, res: Response): void {
     const token = req.body.token
