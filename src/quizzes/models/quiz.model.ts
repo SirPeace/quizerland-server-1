@@ -1,5 +1,5 @@
 import { modelOptions, prop, getModelForClass } from '@typegoose/typegoose'
-import { TQuizRequestSchema } from '../schema/quiz.schema'
+import { TQuizRequestSchema } from '../schemas/quiz.schema'
 import { Question } from './question.model'
 
 @modelOptions({

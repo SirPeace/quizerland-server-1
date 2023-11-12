@@ -1,12 +1,14 @@
-import { NextFunction, Request, Response } from 'express'
+import { Request, Response } from 'express'
 import {
   TUserRequestSchema,
   userRequestSchema,
-} from '../../users/schema/user.schema'
+} from '../../users/schemas/user.schema'
 import UserModel from '../../users/models/user.model'
 import bcrypt from 'bcrypt'
 import { sign } from 'jsonwebtoken'
 import TokenModel from './models/token.model'
+import { TLoginRequestSchema, loginRequestSchema } from './schemas/login.schema'
+import log from '../../utilities/logger'
 
 class AuthController {
   // ========================
@@ -19,18 +21,18 @@ class AuthController {
     const candidateUser = req.body
 
     try {
-      // валидация с ZOD
-      const verifiedUser = userRequestSchema.parse(candidateUser)
+      // валидация  ( ZOD )
+      const verifiedBodyRequest = userRequestSchema.parse(candidateUser)
 
       // хеширование пароля
       const hashPassword = await bcrypt.hash(
-        verifiedUser.password,
+        verifiedBodyRequest.password,
         Number(process.env.SALT),
       )
 
-      // создаём объект пользователя прошедшего валидацию, меняем пароль на хэшированный, записываем нового пользователя в db
+      // создаём объект пользователя, прошедшего валидацию тела запроса, меняем пароль на хэшированный, записываем нового пользователя в db
       const updatedUserData = {
-        ...verifiedUser,
+        ...verifiedBodyRequest,
         password: hashPassword,
       }
       const createdUser = await UserModel.create(updatedUserData)
@@ -45,14 +47,8 @@ class AuthController {
         token,
       })
 
-      // создаём cookie на основе токена
-      res.cookie('auth.token', token, {
-        httpOnly: true,
-        maxAge: 3600 * 1000,
-        sameSite: 'lax',
-      })
       // создаем объект ответа пользователю
-      const resToUser = {
+      const responseToUser = {
         user: {
           email: createdUser.email,
           nickname: createdUser.nickname,
@@ -60,10 +56,16 @@ class AuthController {
         },
       }
 
-      return res.status(201).json(resToUser)
-    } catch (e: any) {
+      // создаём cookie на основе токена
+      res.cookie('auth.token', token, {
+        httpOnly: true,
+        maxAge: 3600 * 1000,
+        sameSite: 'lax',
+      })
+      return res.status(201).json(responseToUser)
+    } catch (err: any) {
       // ошибка DB mongo, попытка зарегистрировать пользователя уже существующего в BD
-      if (e?.name === 'MongoServerError' && e.code === 11000) {
+      if (err?.name === 'MongoServerError' && err.code === 11000) {
         return res
           .status(422)
           .send(
@@ -71,11 +73,11 @@ class AuthController {
           )
       }
       // все ошибки описанные в схеме ZOD
-      if (e?.name === 'ZodError') {
-        return res.status(422).send(e.message)
+      if (err?.name === 'ZodError') {
+        return res.status(422).send(err)
       }
       // непредвиденные ошибки
-      return res.status(500).send(e.message)
+      return res.status(500).send(err)
     }
   }
 
@@ -83,8 +85,63 @@ class AuthController {
   // ======== Login =========
   // ========================
 
-  login(req: Request, res: Response): void {
-    res.json({ message: 'Логирование пользователя' })
+  async login(
+    req: Request<{}, {}, TLoginRequestSchema>,
+    res: Response,
+  ): Promise<Response> {
+    const loginCandidate = req.body
+
+    try {
+      // валидация тела запроса ( ZOD )
+      const verifiedBodyRequest = loginRequestSchema.parse(loginCandidate)
+      const { email, password } = verifiedBodyRequest
+
+      // проверяем наличие пользователя с таким email в db
+      const verifiedUser = await UserModel.findOne({
+        email,
+      })
+      if (verifiedUser === null) {
+        return res.status(422).send(`Неверный логин и/или пароль`)
+      }
+      // проверяем пароль
+      const isCorrectPassword = await bcrypt.compare(
+        password,
+        verifiedUser?.password,
+      )
+      if (!isCorrectPassword) {
+        return res.status(422).send(`Неверный логин и/или пароль`)
+      }
+
+      //! создаём токен, добавляем в db
+      const token = sign({}, String(process.env.JWT_ACCESS_TOKEN), {
+        expiresIn: '1h',
+        algorithm: 'HS256',
+      })
+      TokenModel.create({ userId: verifiedUser._id, token })
+
+      //! создаем объект ответа пользователю
+      const responseToUser = {
+        user: {
+          email: verifiedUser.email,
+          nickname: verifiedUser.nickname,
+          id: verifiedUser._id,
+        },
+      }
+
+      //! создаём cookie на основе токена
+      res.cookie('login.token', token, {
+        httpOnly: true,
+        maxAge: 3600 * 1000,
+        sameSite: 'lax',
+      })
+      return res.status(201).send(responseToUser)
+    } catch (err: any) {
+      if (err.name === 'ZodError') {
+        return res.status(422).send(err)
+      }
+
+      return res.status(500).send(`Ошибка 500`)
+    }
   }
 
   // ========================
