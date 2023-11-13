@@ -8,7 +8,6 @@ import bcrypt from 'bcrypt'
 import { sign } from 'jsonwebtoken'
 import TokenModel from './models/token.model'
 import { TLoginRequestSchema, loginRequestSchema } from './schemas/login.schema'
-import log from '../../utilities/logger'
 
 class AuthController {
   // ========================
@@ -64,7 +63,7 @@ class AuthController {
       })
       return res.status(201).json(responseToUser)
     } catch (err: any) {
-      // ошибка DB mongo, попытка зарегистрировать пользователя уже существующего в BD
+      // ошибка db mongo, попытка зарегистрировать пользователя уже существующего в db
       if (err?.name === 'MongoServerError' && err.code === 11000) {
         return res
           .status(422)
@@ -129,17 +128,18 @@ class AuthController {
       }
 
       //! создаём cookie на основе токена
-      res.cookie('login.token', token, {
+      res.cookie('auth.token', token, {
         httpOnly: true,
         maxAge: 3600 * 1000,
         sameSite: 'lax',
       })
       return res.status(201).send(responseToUser)
     } catch (err: any) {
+      // все ошибки описанные в схеме ZOD
       if (err.name === 'ZodError') {
         return res.status(422).send(err)
       }
-
+      // непредвиденные ошибки
       return res.status(500).send(`Ошибка 500`)
     }
   }
@@ -148,20 +148,47 @@ class AuthController {
   // ======= Logout =========
   // ========================
 
-  logout(req: Request, res: Response): void {
-    res.json({ message: 'Выход из системы' })
+  async logout(req: Request, res: Response): Promise<Response> {
+    // достаём из заголовка запроса токен
+    const token = req.header('Authorization')?.split(' ')?.[1]
+    // удаляем найденный токен из db
+    await TokenModel.deleteOne({ token })
+    // удаляем данные cookie
+    res.clearCookie('auth.token')
+    return res.status(200).send({ message: 'Пользователь завершил сессию' })
   }
 
   // ========================
   // ====== GetUser =========
   // ========================
 
-  getUser(req: Request, res: Response): void {
-    const token = req.body.token
+  async getUser(req: Request, res: Response): Promise<Response> {
+    // Достаём токен из cookie
+    const token = req.cookies['auth.token'] as string | undefined
+    if (!token) {
+      return res.status(401).send({ message: 'Пользователь не авторизован' })
+    }
 
-    console.log(token)
+    // Проверяем, есть ли токен ( из cookie ), в нашей db
+    const verifiedDbToken = await TokenModel.findOne({ token })
+    // Если токен есть, находим пользователя с id === userId из токена
+    const user = await UserModel.findById(verifiedDbToken?.userId)
+    if (user === null) {
+      return res
+        .status(403)
+        .send({ message: 'Пользователь не зарегистрирован' })
+    }
 
-    res.json({ message: 'Получение пользователя' })
+    // создаем объект ответа пользователю
+    const responseToUser = {
+      user: {
+        email: user.email,
+        nickname: user.nickname,
+        id: user._id,
+      },
+    }
+
+    return res.status(200).send(responseToUser)
   }
 }
 

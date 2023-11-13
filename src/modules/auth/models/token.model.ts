@@ -6,7 +6,7 @@ class Token {
   @prop({ type: Schema.Types.ObjectId, ref: 'UserModel', required: true })
   userId: string
 
-  @prop({ type: String, required: true })
+  @prop({ required: true })
   token: string
 }
 

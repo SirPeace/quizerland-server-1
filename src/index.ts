@@ -1,13 +1,16 @@
 import 'dotenv/config'
 import express, { Request, Response } from 'express'
+import cookieParser from 'cookie-parser'
+
 import connectToDb from './utilities/connectToDb'
 import log from './utilities/logger'
 import router from './routes/router'
 
 const app = express()
-const PORT = process.env.PORT ?? 8000
+const PORT = process.env.APP_PORT ?? 8000
 
 app.use(express.json())
+app.use(cookieParser())
 app.use(router)
 
 app.get('/', (req: Request, res: Response) => {

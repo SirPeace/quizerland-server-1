@@ -28,9 +28,9 @@ FROM node:18-alpine as production
 # пара необязательных параметров
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
-
+# Определяем рабочую директорию
 WORKDIR /usr/src/app
-
+# Копируем файлы с описанием зависимостей
 COPY package*.json .
 # Устанавливаем только зависимости ( dependencies ), так как все прочие зависимости в контейнере для ( production ) не нужны
 RUN npm ci --only=production
