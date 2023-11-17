@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import express, { Request, Response } from 'express'
 import cookieParser from 'cookie-parser'
+import cors from 'cors'
 
 import connectToDb from './utilities/connectToDb'
 import log from './utilities/logger'
@@ -11,6 +12,12 @@ const PORT = process.env.APP_PORT ?? 8000
 
 app.use(express.json())
 app.use(cookieParser())
+app.use(
+  cors({
+    credentials: true,
+    origin: process.env.CLIENT_URL,
+  }),
+)
 app.use(router)
 
 app.get('/', (req: Request, res: Response) => {

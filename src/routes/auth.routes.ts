@@ -6,6 +6,6 @@ const authRoutes = express.Router()
 authRoutes.post('/register', AuthController.register)
 authRoutes.post('/', AuthController.login)
 authRoutes.delete('/', AuthController.logout)
-authRoutes.get('/', AuthController.getUser)
+authRoutes.get('/', AuthController.user)
 
 export default authRoutes

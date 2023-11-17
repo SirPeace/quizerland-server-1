@@ -48,11 +48,9 @@ class AuthController {
 
       // создаем объект ответа пользователю
       const responseToUser = {
-        user: {
-          email: createdUser.email,
-          nickname: createdUser.nickname,
-          id: createdUser._id,
-        },
+        email: createdUser.email,
+        nickname: createdUser.nickname,
+        id: createdUser._id,
       }
 
       // создаём cookie на основе токена
@@ -65,18 +63,16 @@ class AuthController {
     } catch (err: any) {
       // ошибка db mongo, попытка зарегистрировать пользователя уже существующего в db
       if (err?.name === 'MongoServerError' && err.code === 11000) {
-        return res
-          .status(422)
-          .send(
-            `Пользователь с таким email: ${candidateUser.email}, уже зарегистрирован!`,
-          )
+        return res.status(422).json({
+          message: `Пользователь с таким email: ${candidateUser.email}, уже зарегистрирован!`,
+        })
       }
       // все ошибки описанные в схеме ZOD
       if (err?.name === 'ZodError') {
-        return res.status(422).send(err)
+        return res.status(422).json(err)
       }
       // непредвиденные ошибки
-      return res.status(500).send(err)
+      return res.status(500).json(err)
     }
   }
 
@@ -100,7 +96,7 @@ class AuthController {
         email,
       })
       if (verifiedUser === null) {
-        return res.status(422).send(`Неверный логин и/или пароль`)
+        return res.status(422).json({ message: `Неверный логин и/или пароль` })
       }
       // проверяем пароль
       const isCorrectPassword = await bcrypt.compare(
@@ -108,7 +104,7 @@ class AuthController {
         verifiedUser?.password,
       )
       if (!isCorrectPassword) {
-        return res.status(422).send(`Неверный логин и/или пароль`)
+        return res.status(422).json({ message: `Неверный логин и/или пароль` })
       }
 
       //! создаём токен, добавляем в db
@@ -120,11 +116,9 @@ class AuthController {
 
       //! создаем объект ответа пользователю
       const responseToUser = {
-        user: {
-          email: verifiedUser.email,
-          nickname: verifiedUser.nickname,
-          id: verifiedUser._id,
-        },
+        email: verifiedUser.email,
+        nickname: verifiedUser.nickname,
+        id: verifiedUser._id,
       }
 
       //! создаём cookie на основе токена
@@ -133,14 +127,14 @@ class AuthController {
         maxAge: 3600 * 1000,
         sameSite: 'lax',
       })
-      return res.status(201).send(responseToUser)
+      return res.status(201).json(responseToUser)
     } catch (err: any) {
       // все ошибки описанные в схеме ZOD
       if (err.name === 'ZodError') {
-        return res.status(422).send(err)
+        return res.status(422).json(err)
       }
       // непредвиденные ошибки
-      return res.status(500).send(`Ошибка 500`)
+      return res.status(500).json({ message: 'Внутренняя ошибка сервера' })
     }
   }
 
@@ -155,18 +149,18 @@ class AuthController {
     await TokenModel.deleteOne({ token })
     // удаляем данные cookie
     res.clearCookie('auth.token')
-    return res.status(200).send({ message: 'Пользователь завершил сессию' })
+    return res.status(200).json({ message: 'Пользователь завершил сессию' })
   }
 
   // ========================
   // ====== GetUser =========
   // ========================
 
-  async getUser(req: Request, res: Response): Promise<Response> {
+  async user(req: Request, res: Response): Promise<Response> {
     // Достаём токен из cookie
     const token = req.cookies['auth.token'] as string | undefined
     if (!token) {
-      return res.status(401).send({ message: 'Пользователь не авторизован' })
+      return res.status(401).json({ message: 'Пользователь не авторизован' })
     }
 
     // Проверяем, есть ли токен ( из cookie ), в нашей db
@@ -176,19 +170,17 @@ class AuthController {
     if (user === null) {
       return res
         .status(403)
-        .send({ message: 'Пользователь не зарегистрирован' })
+        .json({ message: 'Пользователь не зарегистрирован' })
     }
 
     // создаем объект ответа пользователю
     const responseToUser = {
-      user: {
-        email: user.email,
-        nickname: user.nickname,
-        id: user._id,
-      },
+      email: user.email,
+      nickname: user.nickname,
+      id: user._id,
     }
 
-    return res.status(200).send(responseToUser)
+    return res.status(200).json(responseToUser)
   }
 }
 
