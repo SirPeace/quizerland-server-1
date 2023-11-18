@@ -1,4 +1,3 @@
-import 'dotenv/config'
 import mongoose from 'mongoose'
 import log from './logger'
 

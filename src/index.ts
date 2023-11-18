@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import express, { Request, Response } from 'express'
+import express from 'express'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 
@@ -19,10 +19,6 @@ app.use(
   }),
 )
 app.use(router)
-
-app.get('/', (req: Request, res: Response) => {
-  res.send('Это изменило мир!')
-})
 
 const start = async (): Promise<void> => {
   try {

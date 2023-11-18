@@ -20,7 +20,7 @@ class AuthController {
     const candidateUser = req.body
 
     try {
-      // валидация  ( ZOD )
+      // валидация тела запроса ( ZOD )
       const verifiedBodyRequest = userRequestSchema.parse(candidateUser)
 
       // хеширование пароля
@@ -112,7 +112,7 @@ class AuthController {
         expiresIn: '1h',
         algorithm: 'HS256',
       })
-      TokenModel.create({ userId: verifiedUser._id, token })
+      await TokenModel.create({ userId: verifiedUser._id, token })
 
       //! создаем объект ответа пользователю
       const responseToUser = {
@@ -163,10 +163,10 @@ class AuthController {
       return res.status(401).json({ message: 'Пользователь не авторизован' })
     }
 
-    // Проверяем, есть ли токен ( из cookie ), в нашей db
-    const verifiedDbToken = await TokenModel.findOne({ token })
+    // Проверяем, есть ли токен ( из cookie ) в db
+    const verifiedToken = await TokenModel.findOne({ token })
     // Если токен есть, находим пользователя с id === userId из токена
-    const user = await UserModel.findById(verifiedDbToken?.userId)
+    const user = await UserModel.findById(verifiedToken?.userId)
     if (user === null) {
       return res
         .status(403)
