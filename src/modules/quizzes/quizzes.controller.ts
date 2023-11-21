@@ -5,6 +5,9 @@ import TokenModel from '../auth/models/token.model'
 import QuizModel from './models/quiz.model'
 
 class QuizzesController {
+  // ========================
+  // ===== create quiz ======
+  // ========================
   async create(
     req: Request<{}, {}, TQuizRequestSchema>,
     res: Response,
@@ -49,6 +52,32 @@ class QuizzesController {
       // непредвиденные ошибки
       return res.status(500).json(err)
     }
+  }
+
+  // ========================
+  // === get all quizzes ====
+  // ========================
+
+  async quizzes(req: Request, res: Response): Promise<Response> {
+    // Достаём токен из cookie
+    const token = req.cookies['auth.token'] as string | undefined
+    if (!token) {
+      return res.status(401).json({ message: 'Пользователь не авторизован' })
+    }
+
+    // Проверяем, есть ли токен ( из cookie ) в db
+    const verifiedToken = await TokenModel.findOne({ token })
+    // Если токен есть, находим пользователя с id === userId из токена
+    const quizzes = await QuizModel.find()
+    if (quizzes === null) {
+      return res
+        .status(403)
+        .json({ message: 'В базе данных пока нет тестов, создайте первый)' })
+    }
+
+    // создаем объект ответа пользователю
+
+    return res.status(200).json(quizzes)
   }
 }
 
