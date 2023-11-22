@@ -68,14 +68,20 @@ class QuizzesController {
     // Проверяем, есть ли токен ( из cookie ) в db
     const verifiedToken = await TokenModel.findOne({ token })
     // Если токен есть, находим пользователя с id === userId из токена
+    const user = await UserModel.findById(verifiedToken?.userId)
+    if (user === null) {
+      return res
+        .status(403)
+        .json({ message: 'Пользователь не зарегистрирован' })
+    }
+
+    // Если пользователь зарегистрирован, возвращаем ВСЕ тесты
     const quizzes = await QuizModel.find()
     if (quizzes === null) {
       return res
         .status(403)
         .json({ message: 'В базе данных пока нет тестов, создайте первый)' })
     }
-
-    // создаем объект ответа пользователю
 
     return res.status(200).json(quizzes)
   }

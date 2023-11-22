@@ -10,8 +10,9 @@ const connectToDb = async (): Promise<void> => {
   try {
     await mongoose.connect(dbUri)
     log.info('База данных подключена')
-  } catch (error) {
-    log.error(error)
+  } catch (err) {
+    log.error(err)
   }
 }
+
 export default connectToDb
