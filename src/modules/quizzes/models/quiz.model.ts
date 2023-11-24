@@ -4,7 +4,7 @@ import {
   getModelForClass,
   Severity,
 } from '@typegoose/typegoose'
-import { TQuizRequestSchema } from '../schemas/quiz.schema'
+import { TQuizSchema } from '../schemas/quiz.schema'
 import { Question } from './question.model'
 import { Schema } from 'mongoose'
 
@@ -16,7 +16,7 @@ import { Schema } from 'mongoose'
     allowMixed: Severity.ALLOW,
   },
 })
-export class Quiz implements TQuizRequestSchema {
+export class Quiz implements TQuizSchema {
   @prop({ type: Schema.Types.ObjectId, ref: 'UserModel', required: true })
   userId: string
 

@@ -1,6 +1,6 @@
 import { z, object, string } from 'zod'
 
-export const userRequestSchema = object({
+export const userSchema = object({
   nickname: string()
     .min(1, 'Поле обязательное для заполнения!')
     .max(20, 'Псевдоним не может содержать больше 20 символов!'),
@@ -11,4 +11,4 @@ export const userRequestSchema = object({
     .min(8, 'Пароль должен содержать не менее 8 символов!')
     .max(32, 'Пароль не может иметь более 32 символов!'),
 })
-export type TUserRequestSchema = z.infer<typeof userRequestSchema>
+export type TUserSchema = z.infer<typeof userSchema>

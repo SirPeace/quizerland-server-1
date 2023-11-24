@@ -1,27 +1,24 @@
 import { Request, Response } from 'express'
-import {
-  TUserRequestSchema,
-  userRequestSchema,
-} from '../../users/schemas/user.schema'
+import { TUserSchema, userSchema } from '../../users/schemas/user.schema'
 import UserModel from '../../users/models/user.model'
 import bcrypt from 'bcrypt'
 import { sign } from 'jsonwebtoken'
 import TokenModel from './models/token.model'
-import { TLoginRequestSchema, loginRequestSchema } from './schemas/login.schema'
+import { TLoginSchema, loginSchema } from './schemas/login.schema'
 
 class AuthController {
   // ========================
   // ===== Registration =====
   // ========================
   async register(
-    req: Request<{}, {}, TUserRequestSchema>,
+    req: Request<{}, {}, TUserSchema>,
     res: Response,
   ): Promise<Response> {
     const candidateUser = req.body
 
     try {
       // валидация тела запроса ( ZOD )
-      const verifiedBodyRequest = userRequestSchema.parse(candidateUser)
+      const verifiedBodyRequest = userSchema.parse(candidateUser)
 
       // хеширование пароля
       const hashPassword = await bcrypt.hash(
@@ -81,14 +78,14 @@ class AuthController {
   // ========================
 
   async login(
-    req: Request<{}, {}, TLoginRequestSchema>,
+    req: Request<{}, {}, TLoginSchema>,
     res: Response,
   ): Promise<Response> {
     const loginCandidate = req.body
 
     try {
       // валидация тела запроса ( ZOD )
-      const verifiedBodyRequest = loginRequestSchema.parse(loginCandidate)
+      const verifiedBodyRequest = loginSchema.parse(loginCandidate)
       const { email, password } = verifiedBodyRequest
 
       // проверяем наличие пользователя с таким email в db

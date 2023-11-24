@@ -1,8 +1,8 @@
 import { getModelForClass, modelOptions, prop } from '@typegoose/typegoose'
-import { TUserRequestSchema } from '../schemas/user.schema'
+import { TUserSchema } from '../schemas/user.schema'
 
 @modelOptions({ schemaOptions: { timestamps: true } })
-export class User implements TUserRequestSchema {
+export class User implements TUserSchema {
   @prop({ required: true })
   nickname: string
 

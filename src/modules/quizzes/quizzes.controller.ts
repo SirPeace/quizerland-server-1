@@ -1,15 +1,16 @@
 import { Request, Response } from 'express'
-import { TQuizRequestSchema, quizRequestSchema } from './schemas/quiz.schema'
+import { TQuizSchema, quizSchema } from './schemas/quiz.schema'
 import UserModel from '../../users/models/user.model'
 import TokenModel from '../auth/models/token.model'
 import QuizModel from './models/quiz.model'
+import QuizListItemResponseDTO from './responses/quizListItemResponseDTO'
 
 class QuizzesController {
   // ========================
   // ===== create quiz ======
   // ========================
   async create(
-    req: Request<{}, {}, TQuizRequestSchema>,
+    req: Request<{}, {}, TQuizSchema>,
     res: Response,
   ): Promise<Response> {
     const candidateQuiz = req.body
@@ -17,7 +18,7 @@ class QuizzesController {
 
     try {
       // валидация  ( ZOD )
-      const verifiedBodyRequest = quizRequestSchema.parse(candidateQuiz)
+      const verifiedBodyRequest = quizSchema.parse(candidateQuiz)
 
       // Достаём токен из cookie
       const token = req.cookies['auth.token'] as string | undefined
@@ -75,15 +76,28 @@ class QuizzesController {
         .json({ message: 'Пользователь не зарегистрирован' })
     }
 
-    // Если пользователь зарегистрирован, возвращаем ВСЕ тесты
+    //! Добавляем пагинацию
+
+    // Если в параметре не задана задана страница, всегда отображаем 1-ю
+    const page = req.query || 0
+    // Устанавливаем количество тестов отображаемых на одной странице
+    const quizzesPerPage = 3
+
     const quizzes = await QuizModel.find()
-    if (quizzes === null) {
+      .skip(+page * quizzesPerPage)
+      .limit(quizzesPerPage)
+
+    const quizzesResponse = quizzes.map(quiz =>
+      QuizListItemResponseDTO.fromModel(quiz),
+    )
+
+    if (quizzesResponse.length === 0) {
       return res
         .status(403)
         .json({ message: 'В базе данных пока нет тестов, создайте первый)' })
     }
 
-    return res.status(200).json(quizzes)
+    return res.status(200).json(quizzesResponse)
   }
 }
 

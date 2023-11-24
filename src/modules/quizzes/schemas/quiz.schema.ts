@@ -1,6 +1,6 @@
 import { z, object, string } from 'zod'
 
-export const quizRequestSchema = object({
+export const quizSchema = object({
   title: string()
     .min(1, 'Поле обязательное для заполнения!')
     .max(100, 'Название не может иметь более 100 символов!'),
@@ -23,5 +23,5 @@ export const quizRequestSchema = object({
       .array(),
   }).array(),
 })
-export type TQuizRequestSchema = z.infer<typeof quizRequestSchema>
-export type TQuestionSchema = TQuizRequestSchema['questions'][0]
+export type TQuizSchema = z.infer<typeof quizSchema>
+export type TQuestionSchema = TQuizSchema['questions'][0]
