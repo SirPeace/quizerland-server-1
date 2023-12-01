@@ -17,6 +17,9 @@ import { Schema } from 'mongoose'
   },
 })
 export class Quiz implements TQuizSchema {
+  @prop({ type: Schema.Types.ObjectId, required: true })
+  _id: string
+
   @prop({ type: Schema.Types.ObjectId, ref: 'UserModel', required: true })
   userId: string
 

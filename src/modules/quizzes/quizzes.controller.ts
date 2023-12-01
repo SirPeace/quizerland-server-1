@@ -1,10 +1,11 @@
 import { Request, Response } from 'express'
 import { TQuizSchema, quizSchema } from './schemas/quiz.schema'
-import UserModel from '../../users/models/user.model'
+import UserModel, { User } from '../../users/models/user.model'
 import TokenModel from '../auth/models/token.model'
 import QuizModel, { Quiz } from './models/quiz.model'
-import QuizListItemResponseDTO from './responses/quizListItemResponseDTO'
+import QuizListItemResponseDTO from './dto/quizListItemResponseDTO'
 import log from '../../utilities/logger'
+import NotFoundError from '../../errors/NotFoundError'
 
 class QuizzesController {
   // ========================
@@ -15,27 +16,12 @@ class QuizzesController {
     res: Response,
   ): Promise<Response> {
     const candidateQuiz = req.body
-    console.log(candidateQuiz)
+
+    const user = User.currentUser()
 
     try {
       // валидация  ( ZOD )
       const verifiedBodyRequest = quizSchema.parse(candidateQuiz)
-
-      // Достаём токен из cookie
-      const token = req.cookies['auth.token'] as string | undefined
-      if (!token) {
-        return res.status(401).json({ message: 'Пользователь не авторизован' })
-      }
-
-      // Проверяем, есть ли токен ( из cookie ) в db
-      const verifiedToken = await TokenModel.findOne({ token })
-      // Если токен есть, находим пользователя с id === userId из токена
-      const user = await UserModel.findById(verifiedToken?.userId)
-      if (user === null) {
-        return res
-          .status(403)
-          .json({ message: 'Пользователь не зарегистрирован' })
-      }
 
       // Добавляем новый тест в db, привязывая id-пользователя к тесту
       const quiz = {
@@ -61,30 +47,12 @@ class QuizzesController {
   // ========================
 
   async quizzes(req: Request, res: Response): Promise<Response> {
-    // Достаём токен из cookie
-    const token = req.cookies['auth.token'] as string | undefined
-    if (!token) {
-      return res.status(401).json({ message: 'Пользователь не авторизован' })
-    }
-
-    // Проверяем, есть ли токен ( из cookie ) в db
-    const verifiedToken = await TokenModel.findOne({ token })
-    // Если токен есть, находим пользователя с id === userId из токена
-    const user = await UserModel.findById(verifiedToken?.userId)
-    if (user === null) {
-      return res
-        .status(403)
-        .json({ message: 'Пользователь не зарегистрирован' })
-    }
-
     //! Добавляем пагинацию
-
     // Если в параметре не задана задана страница, всегда отображаем 1-ю
     const page = req.query.page || 0
     // Устанавливаем количество тестов отображаемых на одной странице
     const quizzesPerPage = 50
     const quizzesTotalCount = await QuizModel.count()
-    const quizzesPageCount = Math.ceil(quizzesTotalCount / quizzesPerPage)
 
     const quizzes = await QuizModel.find()
       .sort({ createdAt: -1 })
@@ -102,6 +70,33 @@ class QuizzesController {
     }
 
     return res.status(200).json({ quizzes: quizzesResponse, quizzesTotalCount })
+  }
+
+  // ========================
+  // === get quiz by id =====
+  // ========================
+
+  async getQuizById(
+    req: Request<{ id: string }, {}, {}>,
+    res: Response,
+  ): Promise<Response> {
+    const quizId = req.params.id
+
+    try {
+      const quizItem = await QuizModel.findById(quizId)
+      if (quizItem === null) {
+        throw new NotFoundError(`Тест с id: ${quizId} не найден`)
+      }
+
+      return res.status(200).json(quizItem)
+    } catch (err: any) {
+      if (err.name === 'CastError')
+        return res.status(422).json({ message: err.message })
+      if (err instanceof NotFoundError)
+        return res.status(404).json({ message: err.message })
+    }
+
+    return res.status(500).json({ message: 'Внутренняя ошибка сервера' })
   }
 }
 

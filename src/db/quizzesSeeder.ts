@@ -3,6 +3,7 @@ import { faker } from '@faker-js/faker/locale/ru'
 import QuizModel, { Quiz } from '../modules/quizzes/models/quiz.model'
 import { Question } from '../modules/quizzes/models/question.model'
 import connectToDb from '../utilities/connectToDb'
+import log from '../utilities/logger'
 
 const quizzesSeeder = async (): Promise<void> => {
   connectToDb()
@@ -41,6 +42,7 @@ const quizzesSeeder = async (): Promise<void> => {
   }
 
   await seedDB()
+  log.info('( SEEDER ): Данные успешно загружены')
   mongoose.connection.close()
 }
 

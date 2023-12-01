@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import { TUserSchema, userSchema } from '../../users/schemas/user.schema'
-import UserModel from '../../users/models/user.model'
+import UserModel, { User } from '../../users/models/user.model'
 import bcrypt from 'bcrypt'
 import { sign } from 'jsonwebtoken'
 import TokenModel from './models/token.model'
@@ -154,21 +154,7 @@ class AuthController {
   // ========================
 
   async user(req: Request, res: Response): Promise<Response> {
-    // Достаём токен из cookie
-    const token = req.cookies['auth.token'] as string | undefined
-    if (!token) {
-      return res.status(401).json({ message: 'Пользователь не авторизован' })
-    }
-
-    // Проверяем, есть ли токен ( из cookie ) в db
-    const verifiedToken = await TokenModel.findOne({ token })
-    // Если токен есть, находим пользователя с id === userId из токена
-    const user = await UserModel.findById(verifiedToken?.userId)
-    if (user === null) {
-      return res
-        .status(403)
-        .json({ message: 'Пользователь не зарегистрирован' })
-    }
+    const user = User.currentUser()
 
     // создаем объект ответа пользователю
     const responseToUser = {
