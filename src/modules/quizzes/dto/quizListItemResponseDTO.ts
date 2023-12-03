@@ -1,7 +1,8 @@
+import { Schema } from 'mongoose'
 import { Quiz } from '../models/quiz.model'
 
 export default class QuizListItemResponseDTO {
-  id: string
+  id?: Schema.Types.ObjectId
   title: string
   description: string
   userId: string

@@ -2,3 +2,5 @@ node_modules/
 dist/
 NOTES.md/
 memo.txt/
+.vscode
+docker-up
