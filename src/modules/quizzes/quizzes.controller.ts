@@ -81,6 +81,7 @@ class QuizzesController {
     res: Response,
   ): Promise<Response> {
     const quizId = req.params.id
+    await new Promise((resolve, reject) => setTimeout(resolve, 3000))
 
     try {
       const quizItem = await QuizModel.findById(quizId)

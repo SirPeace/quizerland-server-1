@@ -4,8 +4,8 @@ import auth from '../middleware/auth'
 
 const quizzesRoutes = express.Router()
 
-quizzesRoutes.use(auth).post('/create', QuizzesController.create)
+quizzesRoutes.use(auth).post('/', QuizzesController.create)
 quizzesRoutes.use(auth).get('/', QuizzesController.quizzes)
-quizzesRoutes.use(auth).get('/quiz/:id', QuizzesController.getQuizById)
+quizzesRoutes.use(auth).get('/:id', QuizzesController.getQuizById)
 
 export default quizzesRoutes

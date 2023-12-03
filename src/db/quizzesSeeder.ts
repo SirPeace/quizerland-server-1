@@ -1,3 +1,4 @@
+import args from 'args'
 import mongoose from 'mongoose'
 import { faker } from '@faker-js/faker/locale/ru'
 import QuizModel, { Quiz } from '../modules/quizzes/models/quiz.model'
@@ -5,19 +6,19 @@ import { Question } from '../modules/quizzes/models/question.model'
 import connectToDb from '../utilities/connectToDb'
 import log from '../utilities/logger'
 
-const quizzesSeeder = async (): Promise<void> => {
+const quizzesSeeder = async (
+  quizzesCount: number,
+  questionsCount: number,
+): Promise<void> => {
   connectToDb()
-
-  const seedQuizCount = 1000
-  const seedQuestionCount = 5
 
   const randomQuizzes: Quiz[] = []
   const randomQuestions: Question[] = []
 
-  for (let i = 0; i < seedQuestionCount; i++) {
+  for (let i = 0; i < questionsCount; i++) {
     const questions: Question = {
       text: faker.lorem.paragraph(1),
-      rightAnswerId: String(faker.number.int({ min: 1, max: 3 })),
+      rightAnswerIndex: faker.number.int({ min: 0, max: 2 }),
       answers: [
         faker.lorem.words({ min: 1, max: 3 }),
         faker.lorem.words({ min: 1, max: 3 }),
@@ -27,7 +28,7 @@ const quizzesSeeder = async (): Promise<void> => {
     randomQuestions.push(questions)
   }
 
-  for (let i = 0; i < seedQuizCount; i++) {
+  for (let i = 0; i < quizzesCount; i++) {
     const quiz: Quiz = {
       userId: faker.database.mongodbObjectId(),
       title: faker.lorem.sentence({ min: 3, max: 7 }),
@@ -46,4 +47,14 @@ const quizzesSeeder = async (): Promise<void> => {
   mongoose.connection.close()
 }
 
-quizzesSeeder()
+args
+  .option('quizzes', 'Сколько тестов необходимо создать', 1000)
+  .option(
+    'questions',
+    'Сколько вопросов для каждого теста необходимо создать',
+    5,
+  )
+
+const { quizzes, questions } = args.parse(process.argv)
+
+quizzesSeeder(quizzes ?? 1000, questions ?? 5)

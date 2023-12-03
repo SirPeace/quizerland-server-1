@@ -1,4 +1,4 @@
-import { z, object, string } from 'zod'
+import { z, object, string, number } from 'zod'
 
 export const quizSchema = object({
   title: string()
@@ -12,10 +12,10 @@ export const quizSchema = object({
       .min(1, 'Поле обязательное для заполнения!')
       .max(100, 'Вопрос не может содержать более 100 символов!'),
     // TODO: Перевести на тип number().int()
-    rightAnswerId: string({
+    rightAnswerIndex: number({
       errorMap: () => ({ message: 'Выберите вариант ответа' }),
     })
-      .regex(/^\d+$/, { message: 'Выберите вариант ответа' })
+      .int('Выберите вариант ответа')
       .optional(),
     answers: string()
       .min(1, 'Поле обязательное для заполнения!')

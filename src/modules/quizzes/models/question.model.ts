@@ -11,7 +11,7 @@ export class Question implements TQuestionSchema {
   text: string
 
   @prop({ required: true })
-  rightAnswerId: string
+  rightAnswerIndex: number
 
   @prop({ required: true })
   answers: string[]
