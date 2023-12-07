@@ -7,5 +7,8 @@ const quizzesRoutes = express.Router()
 quizzesRoutes.use(auth).post('/', QuizzesController.create)
 quizzesRoutes.use(auth).get('/', QuizzesController.quizzes)
 quizzesRoutes.use(auth).get('/:id', QuizzesController.getQuizById)
+quizzesRoutes
+  .use(auth)
+  .put('/:quizId/progress', QuizzesController.updateQuizProgress)
 
 export default quizzesRoutes

@@ -1,6 +1,7 @@
 export default class NotFoundError extends Error {
-  constructor(message?: string) {
-    super(message ?? 'Нужная запись не найдена')
+  constructor(message: string = 'Нужная запись не найдена') {
+    super(message)
     this.name = 'NotFoundError'
+    this.message = message
   }
 }
