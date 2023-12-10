@@ -1,20 +1,17 @@
-import { Schema } from 'mongoose'
-import { Quiz } from '../models/quiz.model'
-import { Progress } from '../models/progress.model'
-import { Question } from '../models/question.model'
+import { ObjectId } from 'mongoose'
+import { Quiz } from '../../models/quiz.model'
+import { Progress } from '../../models/progress.model'
+import { Question } from '../../models/question.model'
 
 export default class QuizResponseDTO {
   quizItem: {
-    id?: Schema.Types.ObjectId
+    id?: ObjectId
     title: string
     description: string
-    userId: string
     questions: Question[]
   }
   progress: {
-    id?: Schema.Types.ObjectId
-    quizId: string
-    userId: string
+    id?: ObjectId
     currentQuestionIndex: number
     rightAttempts: number
     isFinished: boolean
@@ -26,13 +23,10 @@ export default class QuizResponseDTO {
       id: quizModel._id,
       title: quizModel.title,
       description: quizModel.description,
-      userId: quizModel.userId,
       questions: quizModel.questions,
     }
     dto.progress = {
       id: progressModel._id,
-      quizId: progressModel.quizId,
-      userId: progressModel.userId,
       currentQuestionIndex: progressModel.currentQuestionIndex,
       rightAttempts: progressModel.rightAttempts,
       isFinished: progressModel.isFinished,

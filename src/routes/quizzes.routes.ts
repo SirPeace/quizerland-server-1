@@ -9,6 +9,12 @@ quizzesRoutes.use(auth).get('/', QuizzesController.quizzes)
 quizzesRoutes.use(auth).get('/:id', QuizzesController.getQuizById)
 quizzesRoutes
   .use(auth)
+  .get('available-quiz', QuizzesController.getTheNextAvailableQuiz)
+quizzesRoutes
+  .use(auth)
   .put('/:quizId/progress', QuizzesController.updateQuizProgress)
+quizzesRoutes
+  .use(auth)
+  .delete('/:quizId/progress', QuizzesController.deleteQuizProgress)
 
 export default quizzesRoutes
