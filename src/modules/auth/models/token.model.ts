@@ -3,11 +3,11 @@ import { Schema } from 'mongoose'
 
 @modelOptions({ schemaOptions: { timestamps: true } })
 class Token {
-  @prop({ type: Schema.Types.ObjectId, ref: 'UserModel', required: true })
-  userId: string
+    @prop({ type: Schema.Types.ObjectId, ref: 'UserModel', required: true })
+    userId: string
 
-  @prop({ required: true })
-  token: string
+    @prop({ required: true })
+    token: string
 }
 
 const TokenModel = getModelForClass(Token)

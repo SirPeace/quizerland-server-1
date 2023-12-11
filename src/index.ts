@@ -13,23 +13,23 @@ const PORT = process.env.APP_PORT ?? 8000
 app.use(express.json())
 app.use(cookieParser())
 app.use(
-  cors({
-    credentials: true,
-    origin: process.env.CLIENT_URL,
-  }),
+    cors({
+        credentials: true,
+        origin: process.env.CLIENT_URL,
+    }),
 )
 app.use(router)
 
 const start = async (): Promise<void> => {
-  try {
-    app.listen(PORT, () => {
-      log.info(`Сервер запущен на http://localhost:${PORT}`)
-    })
+    try {
+        app.listen(PORT, () => {
+            log.info(`Сервер запущен на http://localhost:${PORT}`)
+        })
 
-    connectToDb()
-  } catch (error) {
-    log.error(error)
-  }
+        connectToDb()
+    } catch (error) {
+        log.error(error)
+    }
 }
 
 start()
