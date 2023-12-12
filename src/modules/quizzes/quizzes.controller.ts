@@ -1,12 +1,14 @@
 import { Request, Response } from 'express'
+import { Types } from 'mongoose'
+
 import { TQuizSchema, quizSchema } from './schemas/quiz.schema'
 import UserModel, { User } from '../../users/models/user.model'
 import QuizModel, { Quiz } from './models/quiz.model'
 import QuizListItemResponseDTO from './dto/responses/quizListItemResponseDTO'
-import NotFoundError from '../../errors/NotFoundError'
-import ProgressModel, { Progress } from './models/progress.model'
+import ProgressModel from './models/progress.model'
 import QuizResponseDTO from './dto/responses/quizResponseDTO'
 import ProgressRequestDTO from './dto/requests/progressRequestDTO'
+import ResponseError from '../../shared/errors/ResponseError'
 
 class QuizzesController {
     // ========================
@@ -36,10 +38,10 @@ class QuizzesController {
         } catch (err: any) {
             // все ошибки описанные в схеме ZOD
             if (err?.name === 'ZodError') {
-                return res.status(422).json(err)
+                return new ResponseError(err.message, 422).toResponse(res)
             }
             // непредвиденные ошибки
-            return res.status(500).json(err)
+            return new ResponseError().toResponse(res)
         }
     }
 
@@ -64,12 +66,6 @@ class QuizzesController {
             QuizListItemResponseDTO.fromModel(quiz),
         )
 
-        if (quizzesResponse.length === 0) {
-            return res.status(403).json({
-                message: 'В базе данных пока нет тестов, создайте первый)',
-            })
-        }
-
         return res
             .status(200)
             .json({ quizzes: quizzesResponse, quizzesTotalCount })
@@ -81,15 +77,15 @@ class QuizzesController {
 
     async getQuizById(
         req: Request<{ id: string }>,
-        res: Response<QuizResponseDTO>,
-    ): Promise<Response<QuizResponseDTO>> {
+        res: Response,
+    ): Promise<Response> {
         const quizId = req.params.id
         const user = User.currentUser()
 
         try {
             const quizItem = await QuizModel.findById(quizId)
             if (quizItem === null) {
-                throw new NotFoundError(`Тест с id: ${quizId} не найден`)
+                throw new ResponseError(`Тест с id: ${quizId} не найден`, 404)
             }
 
             const detectedProgress = await ProgressModel.findOne({
@@ -112,17 +108,24 @@ class QuizzesController {
 
             return res.status(200).json(quizResponse)
         } catch (err: any) {
-            if (err.name === 'CastError') return res.status(422)
-            if (err instanceof NotFoundError) return res.status(404)
+            if (err.name === 'CastError') {
+                return new ResponseError('Тест не найден', 404).toResponse(res)
+            }
+            if (err instanceof ResponseError) {
+                return err.toResponse(res)
+            }
+            return new ResponseError().toResponse(res)
         }
-
-        return res.status(500)
     }
+
+    // =========================
+    // update quizProgress by id
+    // =========================
 
     async updateQuizProgress(
         req: Request<{ quizId: string }, {}, ProgressRequestDTO>,
-        res: Response<Progress | Error>,
-    ): Promise<Response<Progress | Error>> {
+        res: Response,
+    ): Promise<Response> {
         const { isRightAttempt } = req.body
         const user = UserModel.currentUser()
         const quizId = req.params.quizId
@@ -130,7 +133,7 @@ class QuizzesController {
         try {
             const quiz = await QuizModel.findById(req.params.quizId)
             if (quiz === null) {
-                throw new NotFoundError('Тест не найден')
+                throw new ResponseError('Тест не найден', 404)
             }
 
             const detectedProgress = await ProgressModel.findOne({
@@ -160,14 +163,18 @@ class QuizzesController {
             }
             await progress.save()
 
-            return res.status(201).json(progress)
+            return res.status(201).send(progress)
         } catch (err: any) {
-            if (err instanceof NotFoundError) {
-                return res.status(404).send(err)
+            if (err instanceof ResponseError) {
+                return err.toResponse(res)
             }
-            return res.status(500).json(err)
+            return new ResponseError().toResponse(res)
         }
     }
+
+    // ========================
+    // = delete quiz progress =
+    // ========================
 
     async deleteQuizProgress(
         req: Request<{ quizId: string }>,
@@ -178,7 +185,7 @@ class QuizzesController {
         try {
             const quiz = await QuizModel.findById(req.params.quizId)
             if (quiz === null) {
-                throw new NotFoundError('Тест не найден')
+                throw new ResponseError('Тест не найден')
             }
 
             const quizProgress = await ProgressModel.findOne({
@@ -186,7 +193,7 @@ class QuizzesController {
                 userId: user.id,
             })
             if (quizProgress === null) {
-                throw new NotFoundError('Прогресс не найден')
+                throw new ResponseError('Прогресс не найден')
             }
 
             await quizProgress.deleteOne({
@@ -196,44 +203,75 @@ class QuizzesController {
 
             return res.sendStatus(204)
         } catch (err: any) {
-            if (err instanceof NotFoundError) {
-                return res.status(404).send(err)
+            if (err instanceof ResponseError) {
+                return err.toResponse(res)
             }
-            return res.status(500).json(err)
+            return new ResponseError().toResponse(res)
         }
     }
 
+    // =======================
+    // get next available quiz
+    // =======================
+
     async getTheNextAvailableQuiz(
-        req: Request,
+        req: Request<{}, {}, { excludeIds: string[] }>,
         res: Response,
     ): Promise<Response> {
         const user = UserModel.currentUser()
 
+        const excludedIds =
+            req.body.excludeIds?.map(id => new Types.ObjectId(id)) ?? []
+
         try {
-            const quiz = await QuizModel.findById(req.params.quizId)
-            if (quiz === null) {
-                throw new NotFoundError('Тест не найден')
+            const nextQuizAggregate = QuizModel.aggregate([
+                {
+                    $match: {
+                        _id: {
+                            $nin: excludedIds,
+                        },
+                    },
+                },
+                {
+                    $lookup: {
+                        from: ProgressModel.collection.name,
+                        let: { aggregatedQuizId: '$_id' },
+                        pipeline: [
+                            {
+                                $match: {
+                                    userId: user.id,
+                                    $expr: {
+                                        $eq: ['$quizId', '$$aggregatedQuizId'],
+                                    },
+                                },
+                            },
+                            { $project: { _id: 0, quizId: 1, isFinished: 1 } },
+                            { $limit: 1 },
+                        ],
+                        as: 'availableQuizProgresses',
+                    },
+                },
+                {
+                    $match: {
+                        $or: [
+                            { 'availableQuizProgresses.0.isFinished': false },
+                            { 'availableQuizProgresses.0': { $exists: false } },
+                        ],
+                    },
+                },
+                { $limit: 1 },
+                { $project: { _id: 1 } },
+            ])
+
+            const nextQuizResult = await nextQuizAggregate.exec()
+            if (nextQuizResult.length !== 0) {
+                const data = nextQuizResult[0] as { _id: string }
+                return res.json(data)
             }
 
-            const quizProgress = await ProgressModel.findOne({
-                quizId: quiz.id,
-                userId: user.id,
-            })
-            if (quizProgress === null) {
-                throw new NotFoundError('Прогресс не найден')
-            }
-
-            await quizProgress.deleteOne({
-                quizId: quiz.id,
-                userId: user.id,
-            })
-
-            return res.sendStatus(204)
+            return res.status(404).json({ message: 'Все тесты пройдены' })
         } catch (err: any) {
-            if (err instanceof NotFoundError) {
-                return res.status(404).send(err)
-            }
-            return res.status(500).json(err)
+            return new ResponseError().toResponse(res)
         }
     }
 }

@@ -5,14 +5,17 @@ import auth from '../middleware/auth'
 const quizzesRoutes = express.Router()
 
 quizzesRoutes.use(auth).post('/', QuizzesController.create)
+
 quizzesRoutes.use(auth).get('/', QuizzesController.quizzes)
 quizzesRoutes.use(auth).get('/:id', QuizzesController.getQuizById)
 quizzesRoutes
     .use(auth)
-    .get('available-quiz', QuizzesController.getTheNextAvailableQuiz)
+    .get('/next-available', QuizzesController.getTheNextAvailableQuiz)
+
 quizzesRoutes
     .use(auth)
     .put('/:quizId/progress', QuizzesController.updateQuizProgress)
+
 quizzesRoutes
     .use(auth)
     .delete('/:quizId/progress', QuizzesController.deleteQuizProgress)
