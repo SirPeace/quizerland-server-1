@@ -7,10 +7,12 @@ const quizzesRoutes = express.Router()
 quizzesRoutes.use(auth).post('/', QuizzesController.create)
 
 quizzesRoutes.use(auth).get('/', QuizzesController.quizzes)
-quizzesRoutes.use(auth).get('/:id', QuizzesController.getQuizById)
+
 quizzesRoutes
     .use(auth)
-    .get('/next-available', QuizzesController.getTheNextAvailableQuiz)
+    .get('/next-incomplete', QuizzesController.getNextIncompleteQuiz)
+
+quizzesRoutes.use(auth).get('/:id', QuizzesController.getQuizById)
 
 quizzesRoutes
     .use(auth)

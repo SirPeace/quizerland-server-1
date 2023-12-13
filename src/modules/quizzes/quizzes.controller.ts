@@ -210,18 +210,18 @@ class QuizzesController {
         }
     }
 
-    // =======================
-    // get next available quiz
-    // =======================
+    // ========================
+    // get next incomplete quiz
+    // ========================
 
-    async getTheNextAvailableQuiz(
-        req: Request<{}, {}, { excludeIds: string[] }>,
+    async getNextIncompleteQuiz(
+        req: Request<{}, {}, {}, { excludeIds: string[] }>,
         res: Response,
     ): Promise<Response> {
         const user = UserModel.currentUser()
 
         const excludedIds =
-            req.body.excludeIds?.map(id => new Types.ObjectId(id)) ?? []
+            req.query.excludeIds?.map(id => new Types.ObjectId(id)) ?? []
 
         try {
             const nextQuizAggregate = QuizModel.aggregate([
