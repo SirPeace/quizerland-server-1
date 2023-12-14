@@ -11,7 +11,6 @@ export const quizSchema = object({
         text: string()
             .min(1, 'Поле обязательное для заполнения!')
             .max(100, 'Вопрос не может содержать более 100 символов!'),
-        // TODO: Перевести на тип number().int()
         rightAnswerIndex: number({
             errorMap: () => ({ message: 'Выберите вариант ответа' }),
         })

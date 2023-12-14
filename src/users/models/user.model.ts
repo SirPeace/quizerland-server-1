@@ -5,10 +5,14 @@ import {
     prop,
 } from '@typegoose/typegoose'
 import { TUserSchema } from '../schemas/user.schema'
+import { Schema } from 'mongoose'
 
 @modelOptions({ schemaOptions: { timestamps: true } })
 export class User implements TUserSchema {
     private static _currentUser?: DocumentType<User>
+
+    @prop({ auto: true })
+    _id?: Schema.Types.ObjectId
 
     @prop({ required: true })
     nickname: string
