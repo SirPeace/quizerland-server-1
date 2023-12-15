@@ -6,9 +6,11 @@ import { Question } from '../../models/question.model'
 export default class QuizResponseDTO {
     quizItem: {
         id?: ObjectId
+        userId: string
         title: string
         description: string
         questions: Question[]
+        createdAt: string
     }
     progress: {
         id?: ObjectId
@@ -24,9 +26,11 @@ export default class QuizResponseDTO {
         const dto = new this()
         dto.quizItem = {
             id: quizModel._id,
+            userId: quizModel.userId,
             title: quizModel.title,
             description: quizModel.description,
             questions: quizModel.questions,
+            createdAt: quizModel.createdAt,
         }
         dto.progress = {
             id: progressModel._id,

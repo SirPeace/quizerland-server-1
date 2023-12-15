@@ -9,7 +9,8 @@ import ProgressModel from './models/progress.model'
 import QuizResponseDTO from './dto/responses/quizResponseDTO'
 import ProgressRequestDTO from './dto/requests/progressRequestDTO'
 import ResponseError from '../../shared/errors/ResponseError'
-import CreatedQuizResponseDTO from './dto/responses/createdQuizResponseDTO'
+import CreatedQuizIdResponseDTO from './dto/responses/created_Quiz_Id_ResponseDTO'
+import { DocumentType } from '@typegoose/typegoose'
 
 class QuizzesController {
     // ========================
@@ -35,12 +36,10 @@ class QuizzesController {
 
             const createdQuiz = await QuizModel.create(quiz)
 
-            const createdQuizResponse = CreatedQuizResponseDTO.fromModel(
-                createdQuiz,
-                user,
-            )
+            const createdQuizIdResponse =
+                CreatedQuizIdResponseDTO.fromModel(createdQuiz)
 
-            return res.status(201).json({ createdQuizResponse })
+            return res.status(201).json(createdQuizIdResponse)
         } catch (err: any) {
             // все ошибки описанные в схеме ZOD
             if (err?.name === 'ZodError') {

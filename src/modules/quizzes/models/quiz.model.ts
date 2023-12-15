@@ -12,9 +12,10 @@ import { Schema } from 'mongoose'
     schemaOptions: {
         timestamps: true,
     },
-    options: {
-        allowMixed: Severity.ALLOW,
-    },
+    // Если есть смешанный тип (пример <number | undefined>)
+    // options: {
+    //     allowMixed: Severity.ALLOW,
+    // },
 })
 export class Quiz implements TQuizSchema {
     @prop({ auto: true })
@@ -31,6 +32,12 @@ export class Quiz implements TQuizSchema {
 
     @prop({ required: true })
     questions: Question[]
+
+    @prop({ type: Schema.Types.Date })
+    createdAt: string
+
+    @prop({ type: Schema.Types.Date })
+    updatedAt: string
 }
 
 const QuizModel = getModelForClass(Quiz)
