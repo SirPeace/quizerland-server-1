@@ -34,6 +34,8 @@ const quizzesSeeder = async (
             title: faker.lorem.sentence({ min: 3, max: 7 }),
             description: faker.lorem.sentences({ min: 2, max: 5 }),
             questions: randomQuestions,
+            createdAt: faker.date.recent().toISOString(),
+            updatedAt: faker.date.recent().toISOString(),
         }
         randomQuizzes.push(quiz)
     }
