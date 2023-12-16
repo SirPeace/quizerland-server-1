@@ -2,15 +2,13 @@ import { Request, Response } from 'express'
 import { Types } from 'mongoose'
 
 import { TQuizSchema, quizSchema } from './schemas/quiz.schema'
-import UserModel, { User } from '../../users/models/user.model'
+import UserModel, { User } from '../users/models/user.model'
 import QuizModel, { Quiz } from './models/quiz.model'
-import QuizListItemResponseDTO from './dto/responses/quizListItemResponseDTO'
+import QuizListItemResponseDTO from './dto/responses/quizListItem.response'
 import ProgressModel from './models/progress.model'
-import QuizResponseDTO from './dto/responses/quizResponseDTO'
-import ProgressRequestDTO from './dto/requests/progressRequestDTO'
+import QuizResponseDTO from './dto/responses/quiz.response'
+import ProgressRequestDTO from './dto/requests/progress.request'
 import ResponseError from '../../shared/errors/ResponseError'
-import CreatedQuizIdResponseDTO from './dto/responses/created_Quiz_Id_ResponseDTO'
-import { DocumentType } from '@typegoose/typegoose'
 
 class QuizzesController {
     // ========================
@@ -36,10 +34,7 @@ class QuizzesController {
 
             const createdQuiz = await QuizModel.create(quiz)
 
-            const createdQuizIdResponse =
-                CreatedQuizIdResponseDTO.fromModel(createdQuiz)
-
-            return res.status(201).json(createdQuizIdResponse)
+            return res.status(201).json({ id: createdQuiz.id })
         } catch (err: any) {
             // все ошибки описанные в схеме ZOD
             if (err?.name === 'ZodError') {

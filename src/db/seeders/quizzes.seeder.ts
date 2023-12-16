@@ -1,16 +1,16 @@
 import args from 'args'
 import mongoose from 'mongoose'
 import { faker } from '@faker-js/faker/locale/ru'
-import QuizModel, { Quiz } from '../modules/quizzes/models/quiz.model'
-import { Question } from '../modules/quizzes/models/question.model'
-import connectToDb from '../utilities/connectToDb'
-import log from '../utilities/logger'
+import QuizModel, { Quiz } from '../../modules/quizzes/models/quiz.model'
+import { Question } from '../../modules/quizzes/models/question.model'
+import log from '../../utilities/logger'
+import MongoDB from '../mongodb'
 
 const quizzesSeeder = async (
     quizzesCount: number,
     questionsCount: number,
 ): Promise<void> => {
-    connectToDb()
+    await new MongoDB().connect()
 
     const randomQuizzes: Quiz[] = []
     const randomQuestions: Question[] = []
